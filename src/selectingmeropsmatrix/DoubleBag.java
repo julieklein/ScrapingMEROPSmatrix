@@ -10,7 +10,7 @@ public class DoubleBag {
     private static class Entry {
         Entry() {}
         double k;
-        int occurrences;
+        long occurrences = 0;
     }
 
     private static Comparator<Entry> comparator = new Comparator<Entry>() {
@@ -19,7 +19,7 @@ public class DoubleBag {
             return Double.compare(o1.k, o2.k);
         }
     };
-    private int size = 0;
+    private long size = 0;
     private int recordSize = 0;
     private List<Entry> keys = new ArrayList<Entry>();
 
@@ -42,7 +42,7 @@ public class DoubleBag {
         keys.add(e);
     }
 
-    public int size() {
+    public long size() {
         return size;
     }
 
@@ -63,7 +63,7 @@ public class DoubleBag {
         if (position < 0 || position >= size) {
             throw new NoSuchElementException("Position is past last element: " + position);
         }
-        int index = 0;
+        long index = 0;
         for (int i = 0; i < recordSize; i++) {
             index += keys.get(i).occurrences;
             if (position < index) {
@@ -73,7 +73,7 @@ public class DoubleBag {
         throw new RuntimeException("could not find element position: " + position);
     }
 
-    public int occurrences(double d) {
+    public long occurrences(double d) {
         for (int i = 0; i < recordSize; i++) {
             if (keys.get(i).k == d) {
                 return keys.get(i).occurrences;
