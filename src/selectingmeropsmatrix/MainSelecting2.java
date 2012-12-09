@@ -9,8 +9,10 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class MainSelecting2 {
     public List<String[]> getInputStrings(String fileName) throws IOException {
@@ -202,7 +204,7 @@ public class MainSelecting2 {
         int availableProcessors = Runtime.getRuntime().availableProcessors();
         System.out.println("MainSelecting2.main() running on " + availableProcessors
                 + " processors");
-        ExecutorService runner = Executors.newFixedThreadPool(availableProcessors);
+        final ExecutorService runner = Executors.newFixedThreadPool(availableProcessors);
         List<String[]> inputStrings = selector.getInputStrings(args[0]);
         int counter = 0;
         final int total = inputStrings.size();
@@ -210,39 +212,55 @@ public class MainSelecting2 {
             final String[] values = s;
             counter++;
             final int current = counter;
+            final String resultFileName = "resultFile_" + current + "_" + values[0]
+                    + ".csv";
             if (selector.runnable(values)) {
-                runner.submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        String resultFileName = "resultFile_" + current + "_" + values[0]
-                                + ".csv";
-                        File f = new File(resultFileName);
-                        if (!f.exists()) {
-                            System.out.println("MainSelecting2.main() submitted "
-                                    + current + " of " + total + " : " + new Date());
-                            MatrixEntry e = selector.runOnFullEntry(values);
-                            System.out.println("MainSelecting2.main() finished "
-                                    + current + " of " + total + " : " + new Date());
-                            if (e != null) {
-                                selector.save(resultFileName, e);
-                            } else {
-                                PrintStream p;
-                                try {
-                                    p = new PrintStream(f);
-                                    p.close();
-                                } catch (FileNotFoundException e1) {
-                                    e1.printStackTrace();
-                                }
+                final File f = new File(resultFileName);
+                if (!f.exists()) {
+                    System.out.println("MainSelecting2.main() submitted " + current
+                            + " of " + total + " : " + new Date());
+                    Runnable task = new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                runner.submit(new Callable<Object>() {
+                                    @Override
+                                    public Object call() throws Exception {
+                                        MatrixEntry e = selector.runOnFullEntry(values);
+                                        System.out
+                                                .println("MainSelecting2.main() finished "
+                                                        + current
+                                                        + " of "
+                                                        + total
+                                                        + " : " + new Date());
+                                        if (e != null) {
+                                            selector.save(resultFileName, e);
+                                        } else {
+                                            PrintStream p;
+                                            try {
+                                                p = new PrintStream(f);
+                                                p.close();
+                                            } catch (FileNotFoundException e1) {
+                                                e1.printStackTrace();
+                                            }
+                                        }
+                                        return resultFileName;
+                                    }
+                                }).get(1, TimeUnit.MINUTES);
+                            } catch (Throwable e) {
+                                System.out.println("MainSelecting2 timeout: "
+                                        + resultFileName);
+                                e.printStackTrace();
                             }
                         }
-                    }
-                });
+                    };
+                    runner.submit(task);
+                }
+            } else {
+                selector.save(resultFileName, selector.runOnEmptyInput(s));
             }
-            // else {
-            // selector.save("resultFile_empty_" + s[0] + ".csv",
-            // selector.runOnEmptyInput(s));
-            // }
         }
+        runner.shutdown();
     }
 
     private boolean isInteresting(int[][] Matrix) {
