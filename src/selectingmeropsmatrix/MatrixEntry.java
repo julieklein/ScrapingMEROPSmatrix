@@ -112,6 +112,66 @@ public class MatrixEntry {
         return dP4;
     }
 
+    public void setValidity(boolean[] validity, int base) {
+        double log = Math.log(base);
+        if (validity[0]) {
+            dP4 = base;
+            logDP4 = log;
+        } else {
+            dP4 = 1;
+            logDP4 = 0;
+        }
+        if (validity[1]) {
+            dP3 = base;
+            logDP3 = log;
+        } else {
+            dP3 = 1;
+            logDP3 = 0;
+        }
+        if (validity[2]) {
+            dP2 = base;
+            logDP2 = log;
+        } else {
+            dP2 = 1;
+            logDP2 = 0;
+        }
+        if (validity[3]) {
+            dP1 = base;
+            logDP1 = log;
+        } else {
+            dP1 = 1;
+            logDP1 = 0;
+        }
+        if (validity[4]) {
+            dP1prime = base;
+            logDP1prime = log;
+        } else {
+            dP1prime = 1;
+            logDP1prime = 0;
+        }
+        if (validity[5]) {
+            dP2prime = base;
+            logDP2prime = log;
+        } else {
+            dP2prime = 1;
+            logDP2prime = 0;
+        }
+        if (validity[6]) {
+            dP3prime = base;
+            logDP3prime = log;
+        } else {
+            dP3prime = 1;
+            logDP3prime = 0;
+        }
+        if (validity[7]) {
+            dP4prime = base;
+            logDP4prime = log;
+        } else {
+            dP4prime = 1;
+            logDP4prime = 0;
+        }
+    }
+
     public void setdP4(int dP4) {
         this.dP4 = dP4;
         logDP4 = Math.log(dP4);

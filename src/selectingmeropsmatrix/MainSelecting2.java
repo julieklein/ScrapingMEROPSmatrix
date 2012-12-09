@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -73,79 +74,68 @@ public class MainSelecting2 {
             proteaseentry.setProteasesymbol(proteasename);
             proteaseentry.setMeropsurl(meropsurl);
             proteaseentry.set(Matrix);
-            boolean validityP4 = isValid(0, Matrix);
-            boolean validityP3 = isValid(1, Matrix);
-            boolean validityP2 = isValid(2, Matrix);
-            boolean validityP1 = isValid(3, Matrix);
-            boolean validityP1prime = isValid(4, Matrix);
-            boolean validityP2prime = isValid(5, Matrix);
-            boolean validityP3prime = isValid(6, Matrix);
-            boolean validityP4prime = isValid(7, Matrix);
-            proteaseentry.setdP4(validityP4 ? matrixBase : 1);
-            proteaseentry.setdP3(validityP3 ? matrixBase : 1);
-            proteaseentry.setdP2(validityP2 ? matrixBase : 1);
-            proteaseentry.setdP1(validityP1 ? matrixBase : 1);
-            proteaseentry.setdP1prime(validityP1prime ? matrixBase : 1);
-            proteaseentry.setdP2prime(validityP2prime ? matrixBase : 1);
-            proteaseentry.setdP3prime(validityP3prime ? matrixBase : 1);
-            proteaseentry.setdP4prime(validityP4prime ? matrixBase : 1);
+            boolean[] validity = isValid(Matrix);
+            proteaseentry.setValidity(validity, matrixBase);
             double proteaseLogSum = proteaseentry.logSum();
             DoubleBag lnprobaarray = new DoubleBag();
-            int P4 = 1;
-            int P3 = 1;
-            int P2 = 1;
-            int P1 = 1;
-            int P1prime = 1;
-            int P2prime = 1;
-            int P3prime = 1;
-            int P4prime = 1;
+            // this is used to sort columns by the number of zeroes in them
+            int[] sortedColumns = sortColumns(Matrix);
+            // TODO duplicate lines?
             // this entry is used to keep temporary values
             MatrixEntry temp = new MatrixEntry();
             for (int iP4 = 0; iP4 < 20; iP4++) {
-                if (validityP4) {
-                    P4 = Matrix[iP4][0];
+                int P4 = 1;
+                if (validity[sortedColumns[0]]) {
+                    P4 = Matrix[iP4][sortedColumns[0]];
                 }
                 if (P4 != 0) {
                     temp.setdP4(P4);
                     for (int iP3 = 0; iP3 < 20; iP3++) {
-                        if (validityP3) {
-                            P3 = Matrix[iP3][1];
+                        int P3 = 1;
+                        if (validity[sortedColumns[1]]) {
+                            P3 = Matrix[iP3][sortedColumns[1]];
                         }
                         if (P3 != 0) {
                             temp.setdP3(P3);
                             for (int iP2 = 0; iP2 < 20; iP2++) {
-                                if (validityP2) {
-                                    P2 = Matrix[iP2][2];
+                                int P2 = 1;
+                                if (validity[sortedColumns[2]]) {
+                                    P2 = Matrix[iP2][sortedColumns[2]];
                                 }
                                 if (P2 != 0) {
                                     temp.setdP2(P2);
                                     for (int iP1 = 0; iP1 < 20; iP1++) {
-                                        if (validityP1) {
-                                            P1 = Matrix[iP1][3];
+                                        int P1 = 1;
+                                        if (validity[sortedColumns[3]]) {
+                                            P1 = Matrix[iP1][sortedColumns[3]];
                                         }
                                         if (P1 != 0) {
                                             temp.setdP1(P1);
                                             for (int iP1p = 0; iP1p < 20; iP1p++) {
-                                                if (validityP1prime) {
-                                                    P1prime = Matrix[iP1p][4];
+                                                int P1prime = 1;
+                                                if (validity[sortedColumns[4]]) {
+                                                    P1prime = Matrix[iP1p][sortedColumns[4]];
                                                 }
                                                 if (P1prime != 0) {
                                                     temp.setdP1prime(P1prime);
                                                     for (int iP2p = 0; iP2p < 20; iP2p++) {
-                                                        if (validityP2prime) {
-                                                            P2prime = Matrix[iP2p][5];
+                                                        int P2prime = 1;
+                                                        if (validity[sortedColumns[5]]) {
+                                                            P2prime = Matrix[iP2p][sortedColumns[5]];
                                                         }
                                                         if (P2prime != 0) {
                                                             temp.setdP2prime(P2prime);
                                                             for (int iP3p = 0; iP3p < 20; iP3p++) {
-                                                                if (validityP3prime) {
-                                                                    P3prime = Matrix[iP3p][6];
+                                                                int P3prime = 1;
+                                                                if (validity[sortedColumns[6]]) {
+                                                                    P3prime = Matrix[iP3p][sortedColumns[6]];
                                                                 }
                                                                 if (P3prime != 0) {
                                                                     temp.setdP3prime(P3prime);
                                                                     for (int iP4p = 0; iP4p < 20; iP4p++) {
-                                                                        if (validityP4prime) {
-                                                                            P4prime = Matrix[iP4p][7];
+                                                                        int P4prime = 1;
+                                                                        if (validity[sortedColumns[7]]) {
+                                                                            P4prime = Matrix[iP4p][sortedColumns[7]];
                                                                         }
                                                                         if (P4prime != 0) {
                                                                             temp.setdP4prime(P4prime);
@@ -179,13 +169,37 @@ public class MainSelecting2 {
         return null;
     }
 
+    public int[] sortColumns(int[][] matrix) {
+        int[] zeroes = new int[] { 0, 0, 0, 0, 0, 0, 0, 0 };
+        for (int j = 0; j < 8; j++) {
+            for (int i = 0; i < 20; i++) {
+                if (matrix[i][j] == 0) {
+                    zeroes[j] = zeroes[j] + 1;
+                }
+            }
+        }
+        int[] toReturn = new int[8];
+        for (int i = 0; i < 8; i++) {
+            int max = zeroes[0];
+            int position = 0;
+            for (int j = 1; j < 8; j++) {
+                if (zeroes[j] > max) {
+                    max = zeroes[j];
+                    position = j;
+                }
+            }
+            toReturn[i] = position;
+            zeroes[position] = -1;
+        }
+        return toReturn;
+    }
+
     public static void main(String[] args) throws Throwable {
         // TODO code application logic here
         final MainSelecting2 selector = new MainSelecting2();
         // selector.fileRun(selector.getInputStrings(args[0]),
         // "resultFile.csv");
-        int availableProcessors = Runtime.getRuntime()
-                .availableProcessors();
+        int availableProcessors = Runtime.getRuntime().availableProcessors();
         System.out.println("MainSelecting2.main() running on " + availableProcessors
                 + " processors");
         ExecutorService runner = Executors.newFixedThreadPool(availableProcessors);
@@ -204,13 +218,13 @@ public class MainSelecting2 {
                                 + ".csv";
                         File f = new File(resultFileName);
                         if (!f.exists()) {
-                        System.out.println("MainSelecting2.main() submitted " + current
-                                + " of " + total);
-                        MatrixEntry e = selector.runOnFullEntry(values);
-                        System.out.println("MainSelecting2.main() finished " + current
-                                + " of " + total);
-                        if (e != null) {
-                            selector.save(resultFileName, e);
+                            System.out.println("MainSelecting2.main() submitted "
+                                    + current + " of " + total + " : " + new Date());
+                            MatrixEntry e = selector.runOnFullEntry(values);
+                            System.out.println("MainSelecting2.main() finished "
+                                    + current + " of " + total + " : " + new Date());
+                            if (e != null) {
+                                selector.save(resultFileName, e);
                             } else {
                                 PrintStream p;
                                 try {
@@ -223,7 +237,6 @@ public class MainSelecting2 {
                         }
                     }
                 });
-
             }
             // else {
             // selector.save("resultFile_empty_" + s[0] + ".csv",
@@ -266,5 +279,18 @@ public class MainSelecting2 {
             }
         }
         return false;
+    }
+
+    private boolean[] isValid(int[][] Matrix) {
+        boolean validityP4 = isValid(0, Matrix);
+        boolean validityP3 = isValid(1, Matrix);
+        boolean validityP2 = isValid(2, Matrix);
+        boolean validityP1 = isValid(3, Matrix);
+        boolean validityP1prime = isValid(4, Matrix);
+        boolean validityP2prime = isValid(5, Matrix);
+        boolean validityP3prime = isValid(6, Matrix);
+        boolean validityP4prime = isValid(7, Matrix);
+        return new boolean[] { validityP4, validityP3, validityP2, validityP1,
+                validityP1prime, validityP2prime, validityP3prime, validityP4prime };
     }
 }
