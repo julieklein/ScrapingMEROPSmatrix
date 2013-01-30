@@ -9,10 +9,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class MainSelecting2 {
     public List<String[]> getInputStrings(String fileName) throws IOException {
@@ -43,7 +41,7 @@ public class MainSelecting2 {
     }
 
     public boolean runnable(String[] line) {
-        return line[2].contains("xxx");
+        return line.length > 3 && line[2].contains("xxx");
     }
 
     public MatrixEntry runOnEmptyInput(String[] line) {
@@ -56,7 +54,7 @@ public class MainSelecting2 {
     }
 
     // Lire les donnees pour chaque proteases
-    public MatrixEntry runOnFullEntry(String[] splitarray) {
+    public MatrixEntry runOnFullEntry(String[] splitarray, String name) {
         String meropsurl = splitarray[3];
         String proteasename = splitarray[0];
         int matrixBase = Integer.parseInt(splitarray[1]);
@@ -64,12 +62,27 @@ public class MainSelecting2 {
         // Choisir celles qui ont au moins une colonne avec un aa max
         // 10>=
         // aa min
+        // Set[] sets = new Set[8];
+        // sets[0] = new HashSet();
+        // sets[1] = new HashSet();
+        // sets[2] = new HashSet();
+        // sets[3] = new HashSet();
+        // sets[4] = new HashSet();
+        // sets[5] = new HashSet();
+        // sets[6] = new HashSet();
+        // sets[7] = new HashSet();
         int[][] Matrix = new int[20][8];
         for (int i = 0; i < 8; i++) {
             for (int k = 0; k < 20; k++) {
                 Matrix[k][i] = Integer.parseInt(splitmatrix[i + 8 * k]);
+                // sets[i].add(Matrix[k][i]);
             }
         }
+        // System.out.println("MainSelecting2.runOnFullEntry() " +
+        // sets[0].size() + " "
+        // + sets[1].size() + " " + sets[2].size() + " " + sets[3].size() + " "
+        // + sets[4].size() + " " + sets[5].size() + " " + sets[6].size() + " "
+        // + sets[7].size());
         // check whether the matrix is interesting
         if (isInteresting(Matrix)) {
             MatrixEntry proteaseentry = new MatrixEntry();
@@ -85,73 +98,82 @@ public class MainSelecting2 {
             // TODO duplicate lines?
             // this entry is used to keep temporary values
             MatrixEntry temp = new MatrixEntry();
-            for (int iP4 = 0; iP4 < 20; iP4++) {
-                int P4 = 1;
-                if (validity[sortedColumns[0]]) {
-                    P4 = Matrix[iP4][sortedColumns[0]];
-                }
-                if (P4 != 0) {
-                    temp.setdP4(P4);
-                    for (int iP3 = 0; iP3 < 20; iP3++) {
-                        int P3 = 1;
-                        if (validity[sortedColumns[1]]) {
-                            P3 = Matrix[iP3][sortedColumns[1]];
-                        }
-                        if (P3 != 0) {
-                            temp.setdP3(P3);
-                            for (int iP2 = 0; iP2 < 20; iP2++) {
-                                int P2 = 1;
-                                if (validity[sortedColumns[2]]) {
-                                    P2 = Matrix[iP2][sortedColumns[2]];
-                                }
-                                if (P2 != 0) {
-                                    temp.setdP2(P2);
-                                    for (int iP1 = 0; iP1 < 20; iP1++) {
-                                        int P1 = 1;
-                                        if (validity[sortedColumns[3]]) {
-                                            P1 = Matrix[iP1][sortedColumns[3]];
-                                        }
-                                        if (P1 != 0) {
-                                            temp.setdP1(P1);
-                                            for (int iP1p = 0; iP1p < 20; iP1p++) {
-                                                int P1prime = 1;
-                                                if (validity[sortedColumns[4]]) {
-                                                    P1prime = Matrix[iP1p][sortedColumns[4]];
-                                                }
-                                                if (P1prime != 0) {
-                                                    temp.setdP1prime(P1prime);
-                                                    for (int iP2p = 0; iP2p < 20; iP2p++) {
-                                                        int P2prime = 1;
-                                                        if (validity[sortedColumns[5]]) {
-                                                            P2prime = Matrix[iP2p][sortedColumns[5]];
-                                                        }
-                                                        if (P2prime != 0) {
-                                                            temp.setdP2prime(P2prime);
-                                                            for (int iP3p = 0; iP3p < 20; iP3p++) {
-                                                                int P3prime = 1;
-                                                                if (validity[sortedColumns[6]]) {
-                                                                    P3prime = Matrix[iP3p][sortedColumns[6]];
-                                                                }
-                                                                if (P3prime != 0) {
-                                                                    temp.setdP3prime(P3prime);
-                                                                    for (int iP4p = 0; iP4p < 20; iP4p++) {
-                                                                        int P4prime = 1;
-                                                                        if (validity[sortedColumns[7]]) {
-                                                                            P4prime = Matrix[iP4p][sortedColumns[7]];
-                                                                        }
-                                                                        if (P4prime != 0) {
-                                                                            temp.setdP4prime(P4prime);
-                                                                            lnprobaarray
-                                                                                    .add(temp
-                                                                                            .logSum()
-                                                                                            - proteaseLogSum);
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
+            IntBag ip4Bag = buildBag(Matrix, validity, sortedColumns, 0);
+            IntBag ip3Bag = buildBag(Matrix, validity, sortedColumns, 1);
+            IntBag ip2Bag = buildBag(Matrix, validity, sortedColumns, 2);
+            IntBag ip1Bag = buildBag(Matrix, validity, sortedColumns, 3);
+            IntBag ip1pBag = buildBag(Matrix, validity, sortedColumns, 4);
+            IntBag ip2pBag = buildBag(Matrix, validity, sortedColumns, 5);
+            IntBag ip3pBag = buildBag(Matrix, validity, sortedColumns, 6);
+            IntBag ip4pBag = buildBag(Matrix, validity, sortedColumns, 7);
+            long total = ip1Bag.list().length;
+            total *= ip2Bag.list().length;
+            total *= ip3Bag.list().length;
+            total *= ip4Bag.list().length;
+            total *= ip1pBag.list().length;
+            total *= ip2pBag.list().length;
+            total *= ip3pBag.list().length;
+            total *= ip4pBag.list().length;
+            System.out.println(ip1Bag.occurrences(1));
+            System.out.println(ip2Bag.occurrences(1));
+            System.out.println(ip3Bag.occurrences(1));
+            System.out.println(ip4Bag.occurrences(1));
+            System.out.println(ip1pBag.occurrences(1));
+            System.out.println(ip2pBag.occurrences(1));
+            System.out.println(ip3pBag.occurrences(1));
+            System.out.println(ip4pBag.occurrences(1));
+            long all = total;
+            long time = System.currentTimeMillis();
+            System.out.println("MainSelecting2.runOnFullEntry() " + name + " "
+                    + ip1Bag.list().length + " " + ip2Bag.list().length + " "
+                    + ip3Bag.list().length + " " + ip4Bag.list().length + " "
+                    + ip1pBag.list().length + " " + ip2pBag.list().length + " "
+                    + ip3pBag.list().length + " " + ip4pBag.list().length + "\t" + total
+                    + " (" + total / 2000000 + ")");
+
+            for (int P4 : ip4Bag.list()) {
+                long repeatp4 = ip4Bag.occurrences(P4);
+                temp.setdP4(P4);
+                for (int P3 : ip3Bag.list()) {
+                    long repeatp3 = ip3Bag.occurrences(P3);
+                    temp.setdP3(P3);
+                    for (int P2 : ip2Bag.list()) {
+                        long repeatp2 = ip2Bag.occurrences(P2);
+                        temp.setdP2(P2);
+                        for (int P1 : ip1Bag.list()) {
+                            long repeatp1 = ip1Bag.occurrences(P1);
+                            temp.setdP1(P1);
+                            for (int P1prime : ip1pBag.list()) {
+                                long repeatp1p = ip1pBag.occurrences(P1prime);
+                                temp.setdP1prime(P1prime);
+                                for (int P2prime : ip2pBag.list()) {
+                                    long repeatp2p = ip2pBag.occurrences(P2prime);
+                                    temp.setdP2prime(P2prime);
+                                    for (int P3prime : ip3pBag.list()) {
+                                        long repeatp3p = ip3pBag.occurrences(P3prime);
+                                        temp.setdP3prime(P3prime);
+                                        for (int P4prime : ip4pBag.list()) {
+                                            long repeatp4p = ip4pBag.occurrences(P4prime);
+                                            temp.setdP4prime(P4prime);
+                                            long repetitions = repeatp1 * repeatp1p
+                                                    * repeatp2 * repeatp2p * repeatp3
+                                                    * repeatp3p * repeatp4 * repeatp4p;
+                                            lnprobaarray.add(temp.logSum()
+                                                    - proteaseLogSum, repetitions);
+                                            total--;
+                                            if (total % 1000000 == 0) {
+                                                System.out
+                                                        .println("MainSelecting2.runOnFullEntry() "
+                                                                + name
+                                                                + " still to do: "
+                                                                + total
+                                                                + "\t of "
+                                                                + all
+                                                                + " ("
+                                                                + (System
+                                                                        .currentTimeMillis() - time)
+                                                                + ")");
+                                                time = System.currentTimeMillis();
                                             }
                                         }
                                     }
@@ -168,7 +190,23 @@ public class MainSelecting2 {
             proteaseentry.setQ25(lnprobaarray.get(quarter));
             return proteaseentry;
         }
+        System.out.flush();
         return null;
+    }
+
+    private IntBag buildBag(int[][] Matrix, boolean[] validity, int[] sortedColumns,
+            int index) {
+        IntBag ip4Bag = new IntBag();
+        for (int iP4 = 0; iP4 < 20; iP4++) {
+            int P4 = 1;
+            if (validity[sortedColumns[index]]) {
+                P4 = Matrix[iP4][sortedColumns[index]];
+            }
+            if (P4 != 0) {
+                ip4Bag.add(P4);
+            }
+        }
+        return ip4Bag;
     }
 
     public int[] sortColumns(int[][] matrix) {
@@ -205,62 +243,96 @@ public class MainSelecting2 {
         System.out.println("MainSelecting2.main() running on " + availableProcessors
                 + " processors");
         final ExecutorService runner = Executors.newFixedThreadPool(availableProcessors);
+        final ExecutorService baserunner = Executors
+                .newFixedThreadPool(availableProcessors);
         List<String[]> inputStrings = selector.getInputStrings(args[0]);
         int counter = 0;
         final int total = inputStrings.size();
         for (String[] s : inputStrings) {
-            final String[] values = s;
             counter++;
+            if (s.length < 3) {
+                continue;
+            }
+            final String[] values = s;
             final int current = counter;
             final String resultFileName = "resultFile_" + current + "_" + values[0]
                     + ".csv";
             if (selector.runnable(values)) {
-                final File f = new File(resultFileName);
-                if (!f.exists()) {
-                    System.out.println("MainSelecting2.main() submitted " + current
-                            + " of " + total + " : " + new Date());
-                    Runnable task = new Runnable() {
-                        @Override
-                        public void run() {
-                            try {
-                                runner.submit(new Callable<Object>() {
-                                    @Override
-                                    public Object call() throws Exception {
-                                        MatrixEntry e = selector.runOnFullEntry(values);
-                                        System.out
-                                                .println("MainSelecting2.main() finished "
-                                                        + current
-                                                        + " of "
-                                                        + total
-                                                        + " : " + new Date());
-                                        if (e != null) {
-                                            selector.save(resultFileName, e);
-                                        } else {
-                                            PrintStream p;
-                                            try {
-                                                p = new PrintStream(f);
-                                                p.close();
-                                            } catch (FileNotFoundException e1) {
-                                                e1.printStackTrace();
-                                            }
-                                        }
-                                        return resultFileName;
-                                    }
-                                }).get(1, TimeUnit.MINUTES);
-                            } catch (Throwable e) {
-                                System.out.println("MainSelecting2 timeout: "
-                                        + resultFileName);
-                                e.printStackTrace();
-                            }
-                        }
-                    };
-                    runner.submit(task);
-                }
+                // System.out.println("MainSelecting2.main() submitted " +
+                // current
+                // + " of " + total + " : " + new Date());
+                _call(resultFileName, selector, values, current, total);
+                // Runnable task = new Runnable() {
+                // @Override
+                // public void run() {
+                // try {
+                // runner.submit(new Callable<String>() {
+                // @Override
+                // public String call() {
+                // return _call(resultFileName,selector, values, current,total);
+                // // final File f = new File(resultFileName);
+                // // if (!f.exists()) {
+                // // try {
+                // // MatrixEntry e = selector.runOnFullEntry(
+                // // values, resultFileName);
+                // // System.out
+                // // .println("MainSelecting2.main() finished "
+                // // + current
+                // // + " of "
+                // // + total
+                // // + " : " + new Date());
+                // // if (e != null) {
+                // // selector.save(resultFileName, e);
+                // // } else {
+                // // PrintStream p;
+                // // p = new PrintStream(f);
+                // // p.close();
+                // // }
+                // // } catch (Throwable e) {
+                // // System.out.println("MainSelecting2 error: "
+                // // + resultFileName);
+                // // e.printStackTrace();
+                // // }
+                // // }
+                // // return resultFileName;
+                // }
+                // }).get(50, TimeUnit.HOURS);
+                // } catch (Exception e) {
+                // System.out.println("MainSelecting2 error: " +
+                // resultFileName);
+                // e.printStackTrace();
+                // }
+                // }
+                // };
+                // baserunner.submit(task);
             } else {
                 selector.save(resultFileName, selector.runOnEmptyInput(s));
             }
         }
-        runner.shutdown();
+        // runner.shutdown();
+    }
+
+    public static String _call(String resultFileName, MainSelecting2 selector,
+            String[] values, int current, int total) {
+        final File f = new File(resultFileName);
+        if (!f.exists()) {
+            try {
+                MatrixEntry e = selector.runOnFullEntry(values, resultFileName);
+                System.out.println("MainSelecting2.main() finished " + current + " of "
+                        + total + " : " + new Date());
+                if (e != null) {
+                    selector.save(resultFileName, e);
+                } else {
+                    PrintStream p;
+                    p = new PrintStream(f);
+                    p.close();
+                }
+            } catch (Throwable e) {
+                System.out.println("MainSelecting2 error: " + resultFileName);
+                e.printStackTrace();
+            }
+        }
+        return resultFileName;
     }
 
     private boolean isInteresting(int[][] Matrix) {

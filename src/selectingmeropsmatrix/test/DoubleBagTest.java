@@ -14,14 +14,14 @@ public class DoubleBagTest {
         int _100 = 100000;
         for (int i = 0; i < _100; i++) {
             list.add(d + i);
-            bag.add(d + i);
+            bag.add(d + i, 1);
         }
         System.out.println("DoubleBagTest.main() list " + list.size());
         System.out.println("DoubleBagTest.main() bag  " + list.size());
         for (int i = 0; i < _100; i++) {
             double e = list.get(i);
             list.add(e);
-            bag.add(e);
+            bag.add(e, 1);
         }
         Collections.sort(list);
         bag.sort();
