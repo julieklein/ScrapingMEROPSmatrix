@@ -24,7 +24,6 @@ public class DoubleBagTest {
             bag.add(e, 1);
         }
         Collections.sort(list);
-        bag.sort();
         System.out.println("DoubleBagTest.main() list " + list.size());
         System.out.println("DoubleBagTest.main() bag  " + list.size());
         for (int i = 0; i < list.size(); i++) {
